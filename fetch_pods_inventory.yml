@@ -15,19 +15,25 @@
         name: "{{ item.metadata.name }}"
         group: "ocp_pods"
         ansible_connection: kubernetes.core.kubectl
-        # REMOVED: ansible_kubectl_namespace (avoids the flag placement error)
         ansible_host: "{{ item.metadata.name }}"
+        # REDIRECT TEMP DIR
         ansible_remote_tmp: /tmp
+        # FIX FOR FLAG PLACEMENT ERROR: 
+        # These variables tell the connection plugin how to authenticate 
+        # without putting flags in the wrong place.
+        ansible_kubectl_server: "{{ query('config', 'K8S_AUTH_HOST') | first | default(omit) }}"
+        ansible_kubectl_token: "{{ query('config', 'K8S_AUTH_API_KEY') | first | default(omit) }}"
+        ansible_kubectl_verify_ssl: false
       loop: "{{ pod_list.resources }}"
 
-- name: Test Connections with Raw Module
+- name: Test Connections
   hosts: ocp_pods
   gather_facts: false
   tasks:
     - name: Run a direct command
-      ansible.builtin.raw: hostname
+      ansible.builtin.raw: echo "Successfully connected to $(hostname)"
       register: raw_output
 
-    - name: Show Pod Hostname
+    - name: Show Result
       ansible.builtin.debug:
-        msg: "Success! Connected to pod: {{ raw_output.stdout | trim }}"
+        msg: "{{ raw_output.stdout | trim }}"
