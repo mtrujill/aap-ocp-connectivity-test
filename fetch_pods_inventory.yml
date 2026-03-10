@@ -1,0 +1,33 @@
+- name: Build Dynamic Pod Inventory
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Get running pods in namespace
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: rhn-support-mtrujill-dev
+        field_selectors:
+          - status.phase=Running
+      register: pod_list
+
+    - name: Add pods to inventory
+      ansible.builtin.add_host:
+        name: "{{ item.metadata.name }}"
+        group: "ocp_pods"
+        ansible_connection: kubernetes.core.kubectl
+        ansible_kubectl_namespace: "{{ item.metadata.namespace }}"
+        # This identifies the specific pod for the connection plugin
+        ansible_host: "{{ item.metadata.name }}"
+      loop: "{{ pod_list.resources }}"
+
+- name: Manage the discovered pods
+  hosts: ocp_pods
+  gather_facts: false
+  tasks:
+    - name: Verify connection
+      ansible.builtin.command: hostname
+      register: pod_hostname
+
+    - name: Show Pod Hostname
+      ansible.builtin.debug:
+        msg: "Connected to pod: {{ pod_hostname.stdout }}"
