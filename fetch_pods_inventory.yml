@@ -15,18 +15,19 @@
         name: "{{ item.metadata.name }}"
         group: "ocp_pods"
         ansible_connection: kubernetes.core.kubectl
-        ansible_kubectl_namespace: "{{ item.metadata.namespace }}"
+        # REMOVED: ansible_kubectl_namespace (avoids the flag placement error)
         ansible_host: "{{ item.metadata.name }}"
+        ansible_remote_tmp: /tmp
       loop: "{{ pod_list.resources }}"
 
 - name: Test Connections with Raw Module
   hosts: ocp_pods
-  gather_facts: false  # REQUIRED: Gathering facts needs a temp directory
+  gather_facts: false
   tasks:
-    - name: Run a direct command without using temp space
+    - name: Run a direct command
       ansible.builtin.raw: hostname
       register: raw_output
 
     - name: Show Pod Hostname
       ansible.builtin.debug:
-        msg: "Successfully bypassed temp directory on pod: {{ raw_output.stdout_lines[0] }}"
+        msg: "Success! Connected to pod: {{ raw_output.stdout | trim }}"
