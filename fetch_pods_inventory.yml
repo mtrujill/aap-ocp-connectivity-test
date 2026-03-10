@@ -18,11 +18,9 @@
         ansible_host: "{{ item.metadata.name }}"
         # REDIRECT TEMP DIR
         ansible_remote_tmp: /tmp
-        # FIX FOR FLAG PLACEMENT ERROR: 
-        # These variables tell the connection plugin how to authenticate 
-        # without putting flags in the wrong place.
-        ansible_kubectl_server: "{{ query('config', 'K8S_AUTH_HOST') | first | default(omit) }}"
-        ansible_kubectl_token: "{{ query('config', 'K8S_AUTH_API_KEY') | first | default(omit) }}"
+        # FIX: Using env lookup instead of config query
+        ansible_kubectl_server: "{{ lookup('env', 'K8S_AUTH_HOST') }}"
+        ansible_kubectl_token: "{{ lookup('env', 'K8S_AUTH_API_KEY') }}"
         ansible_kubectl_verify_ssl: false
       loop: "{{ pod_list.resources }}"
 
