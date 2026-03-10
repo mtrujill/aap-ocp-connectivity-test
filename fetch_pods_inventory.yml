@@ -18,6 +18,7 @@
         ansible_kubectl_namespace: "{{ item.metadata.namespace }}"
         # This identifies the specific pod for the connection plugin
         ansible_host: "{{ item.metadata.name }}"
+        ansible_remote_tmp: /tmp
       loop: "{{ pod_list.resources }}"
 
 - name: Manage the discovered pods
